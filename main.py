@@ -10,7 +10,10 @@ WORD_TEXT_FONT = ("Arial", 60, "bold")  # 400, 263
 class FlashCardUi(Tk):
     def __init__(self):
         super().__init__()
-        database = pandas.read_csv("data/french_words.csv")
+        try:
+            database = pandas.read_csv("data/dutch_words.csv")
+        except FileNotFoundError:
+            database = pandas.read_csv("data/dutch_words_to_learn.csv")
         self.words = database.to_dict(orient="records")
         self.title = "Language learner"
         self.config(pady=50, padx=50, bg=BACKGROUND_COLOR)
@@ -23,22 +26,31 @@ class FlashCardUi(Tk):
         self.word = self.flash_card.create_text(400, 263, font=WORD_TEXT_FONT, text="Word")
         self.check_image = PhotoImage(file="images/right.png")
         self.cross_image = PhotoImage(file="images/wrong.png")
-        self.known_button = Button(image=self.check_image, highlightthickness=0, command=self.next_card)
+        self.known_button = Button(image=self.check_image, highlightthickness=0, command=self.click_check)
         self.known_button.grid(column=1, row=1)
-        self.unknown_button = Button(image=self.cross_image, highlightthickness=0, command=self.next_card)
+        self.unknown_button = Button(image=self.cross_image, highlightthickness=0, command=self.click_cross)
         self.unknown_button.grid(column=0, row=1)
         self.current_word = {}
         self.flip_timer = ""
         self.next_card()
         self.mainloop()
 
+    def click_check(self):
+        self.words.remove(self.current_word)
+        data = pandas.DataFrame(data=self.words)
+        data.to_csv("data/dutch_words_to_learn.csv", index=False)
+        self.next_card()
+
+    def click_cross(self):
+        self.next_card()
+
     def next_card(self):
         if self.flip_timer:
             self.after_cancel(self.flip_timer)
         self.flash_card.itemconfig(self.image_id, image=self.foreground)
         self.current_word = random.choice(self.words)
-        self.flash_card.itemconfig(self.language, text="French", fill="Black")
-        self.flash_card.itemconfig(self.word, text=f"{self.current_word.get('French')}", fill="Black")
+        self.flash_card.itemconfig(self.language, text="Dutch", fill="Black")
+        self.flash_card.itemconfig(self.word, text=f"{self.current_word.get('Dutch')}", fill="Black")
         self.flip_timer = self.after(3000, func=self.flip_card)
 
     def flip_card(self):
